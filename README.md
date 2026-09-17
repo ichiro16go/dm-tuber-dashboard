@@ -8,7 +8,7 @@
 - **フロントエンド**: Next.js (App Router) / TypeScript / Tailwind CSS
 - **DB**: Supabase (PostgreSQL)
 - **データ収集バッチ**: `scripts/fetch-youtube-data.ts`（YouTube Data API v3）、GitHub Actions で日次実行
-- **認証**: 合言葉（共通パスワード）によるCookieセッション
+- **公開範囲**: 認証なしの一般公開ページ
 
 未設定でも `npm run dev` で起動でき、その場合はサンプルデータでUIを確認できます（画面上部にバナー表示）。
 
@@ -25,8 +25,6 @@ npm run dev
 
 | 変数名 | 用途 |
 | --- | --- |
-| `DASHBOARD_PASSWORD` | ダッシュボード閲覧用の合言葉 |
-| `SESSION_SECRET` | セッションCookie署名用シークレット（未設定時は `DASHBOARD_PASSWORD` を使用） |
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | アプリの読み取り用（未設定ならサンプルデータ表示） |
 | `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_URL` | バッチ処理の書き込み専用。**ブラウザに露出させないこと** |
 | `YOUTUBE_API_KEY` | バッチ処理専用のYouTube Data APIキー |
