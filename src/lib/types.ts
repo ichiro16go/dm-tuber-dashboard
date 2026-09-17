@@ -1,5 +1,5 @@
 // タグ区分（カテゴリフィルタ用）
-export const TAG_OPTIONS = ["デュエプレ", "紙", "VTuber"] as const;
+export const TAG_OPTIONS = ["デュエプレ", "紙", "VTuber", "ゆっくり"] as const;
 export type Tag = (typeof TAG_OPTIONS)[number];
 
 export const ALL_TAG = "ALL" as const;
