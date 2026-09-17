@@ -1,4 +1,4 @@
-import "dotenv/config";
+import { config } from "dotenv";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fetchChannels, fetchRecentVideoIds, fetchVideos } from "./lib/youtube";
@@ -6,6 +6,8 @@ import { parseIso8601Duration } from "./lib/duration";
 import { computeMetrics, hasRecentActivity, SHORTS_MAX_DURATION_SECONDS } from "./lib/metrics";
 import { getSupabaseAdminClient } from "../src/lib/supabase";
 import type { Video } from "../src/lib/types";
+
+config({ path: [".env.local", ".env"] });
 
 const MIN_SUBSCRIBER_COUNT = 1000;
 
@@ -128,7 +130,7 @@ async function main() {
   const candidates = loadCandidates();
   if (candidates.length === 0) {
     console.warn(
-      "config/channel-candidates.json is empty. Nothing to fetch. See config/channel-candidates.example.json for the format."
+      "config/channel-candidates.json is empty. Add real YouTube channel IDs before running the fetch. See config/channel-candidates.example.json for the format."
     );
     return;
   }
