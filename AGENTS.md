@@ -29,10 +29,11 @@ YouTube Data API v3
 Supabase (Postgres)  channels / videos / channel_metrics
       │  (anon key・読み取り専用。RLSでSELECTのみ許可)
       ▼
-Next.js Server Component (src/app/page.tsx)
-      │  getChannelsWithMetrics() (src/lib/data.ts)
+Next.js Server Component (src/app/page.tsx / src/app/channels/[id]/page.tsx)
+      │  getChannelsWithMetrics() / getChannelDetail() (src/lib/data.ts)
       ▼
-ChannelDashboard (クライアントコンポーネント: フィルタ・ソート・Top20/全件切替)
+ChannelDashboard (一覧。クライアントコンポーネント: フィルタ・ソート・Top20/全件切替)
+チャンネル詳細 (サーバーコンポーネント: 指標・通常動画の再生数グラフ・直近30日の投稿一覧)
 ```
 
 重要なのは **書き込みはバッチ処理のみ、アプリは常に読み取り専用** という非対称性。
@@ -96,8 +97,13 @@ UIには `isSample` に応じたバナーが出る（`ChannelDashboard.tsx`）�
 - **直近30本平均**: 通常動画（ショート・生配信除外後）を投稿日時降順に並べ、先頭30本（足りなければ全件）の再生数平均。
 - **直近30日平均**: 通常動画のうち過去30日以内に投稿されたものの再生数平均。
 - どちらも対象0件なら0を返す（NaN/Infinityを表示しない）。
-- この2つの指標は意図的に別軸: 「直近30本平均」は投稿頻度が低いチャンネルでも遡って評価でき、
-  「直近30日平均」は今まさに勢いがあるかを見る。片方だけに統合しないこと。
+- **UIのメイン指標は「直近30日平均」のみ**。「直近30本平均」はオーナー判断で表示・ソート対象から外した
+  （今まさに勢いがあるかを軸に比較したいため）。ただしバッチでの計算と `channel_metrics.avg_views_last_30_videos`
+  への保存は残しており、将来また表示したくなった場合にスキーマ変更なしで戻せるようにしている。
+  `fetchRecentVideoIds` が「30本集まるまで」ページングするのもこの指標のため。
+- ソート指標は `直近30日平均` / `30日投稿数`（通常動画の本数）/ `登録者数`（`SortMetric`）。
+- **チャンネル詳細画面**（`/channels/[id]`）の動画一覧・グラフは `metrics.updatedAt`（バッチ集計時刻）から
+  30日を切り出す。表示時刻を起点にすると一覧の「直近30日平均」と別の動画集合になってしまうため。
 
 これらの関数は `scripts/verify-metrics.ts`（`npm run verify-metrics`）で最低限の回帰確認をしている。
 計算式を変更したらこのスクリプトのアサーションも更新すること。
@@ -123,15 +129,18 @@ UIコンポーネント（`src/components/ChannelDashboard.tsx`）を書いて�
 src/
   app/
     layout.tsx        ルートレイアウト（メタデータ、フォント、背景色）
-    page.tsx           唯一のページ。サーバーコンポーネントでデータ取得しChannelDashboardへ渡す
+    page.tsx           一覧ページ。サーバーコンポーネントでデータ取得しChannelDashboardへ渡す
+    channels/[id]/page.tsx  チャンネル詳細。初回アクセス時に生成しISR（generateStaticParams は空配列）
     globals.css
   components/
     ChannelDashboard.tsx  クライアントコンポーネント。フィルタ/ソート/表示件数はここで完結（サーバーには問い合わせない）
+    ChannelParts.tsx      サンプル表示バナー・アイコン・タグなど一覧/詳細共通の小部品
+    ViewsChart.tsx         詳細画面の通常動画ごとの再生数グラフ（CSSのみ、ホバー/フォーカスで値表示）
   lib/
     types.ts           Channel / Video / ChannelMetrics 等のドメイン型。要件定義書のデータモデルと1:1
     supabase.ts         読み取り用(anon)・書き込み用(service role)クライアントの生成
-    data.ts             getChannelsWithMetrics()。Supabase→サンプルデータのフォールバックを内包
-    sample-data.ts       架空チャンネルのフィクスチャ
+    data.ts             getChannelsWithMetrics() / getChannelDetail()。Supabase→サンプルデータのフォールバックを内包
+    sample-data.ts       架空チャンネル・架空動画のフィクスチャ（動画は metrics と平均・本数が一致するよう生成）
     format.ts            表示用の数値フォーマッタ（コンパクト表記）
 
 scripts/                Next.jsアプリとは独立したNode CLIバッチ（tsxで実行、ビルド成果物には含まれない）
@@ -147,6 +156,7 @@ config/
   channel-candidates.example.json  フォーマット例
 
 supabase/migrations/0001_init.sql  スキーマ定義（channels / videos / channel_metrics、RLSポリシー含む）
+supabase/migrations/0002_video_title.sql  videos.title 追加（詳細画面の動画一覧用。snippetは取得済みのためクォータ増なし）
 
 .github/workflows/fetch-data.yml   バッチの日次実行（cron）
 ```

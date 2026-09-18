@@ -18,6 +18,7 @@ export interface Channel {
 export interface Video {
   id: string; // YouTube Video ID
   channelId: string;
+  title: string; // 動画タイトル
   publishedAt: string; // 投稿日時 (ISO8601)
   viewCount: number; // 再生回数
   duration: number; // 秒数
@@ -39,6 +40,16 @@ export interface ChannelWithMetrics extends Channel {
   metrics: ChannelMetrics | null;
 }
 
-export type SortMetric = "avgViewsLast30Videos" | "avgViewsLast30Days" | "subscriberCount";
+// 直近30本平均はDBには保持しているが、ダッシュボードの表示・ソート対象からは外している（AGENTS.md 3.6）。
+export type SortMetric = "avgViewsLast30Days" | "last30DaysVideoCount" | "subscriberCount";
 
 export type SortOrder = "desc" | "asc";
+
+// チャンネル詳細画面用
+export interface ChannelDetail {
+  channel: ChannelWithMetrics;
+  rank: number; // 直近30日平均での全体順位（1始まり）
+  totalChannels: number;
+  recentVideos: Video[]; // 直近30日の全動画（ショート・生配信含む）。投稿日時の降順
+  videosUnavailable: boolean; // 動画一覧の取得に失敗した場合 true
+}

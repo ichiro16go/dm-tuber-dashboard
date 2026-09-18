@@ -16,6 +16,7 @@ assert.strictEqual(isWithinDays(new Date(now - 40 * 86400000).toISOString(), 30,
 const videos: Video[] = Array.from({ length: 35 }, (_, i) => ({
   id: `v${i}`,
   channelId: "c1",
+  title: `video ${i}`,
   publishedAt: new Date(now - i * 2 * 86400000).toISOString(), // 0,2,4,...68 days ago
   viewCount: 1000 + i,
   duration: 300,
