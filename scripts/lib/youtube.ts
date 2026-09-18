@@ -13,7 +13,7 @@ export interface YoutubePlaylistItemResource {
 
 export interface YoutubeVideoResource {
   id: string;
-  snippet?: { publishedAt?: string };
+  snippet?: { publishedAt?: string; title?: string };
   contentDetails?: { duration?: string };
   statistics?: { viewCount?: string };
   liveStreamingDetails?: Record<string, unknown>;

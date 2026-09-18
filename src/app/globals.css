@@ -1,26 +1,40 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-zen-kaku), sans-serif;
+  --font-display: var(--font-dela-gothic), sans-serif;
+  --font-mono: var(--font-plex-mono), monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+@theme {
+  /* 背景・面 */
+  --color-ground: #0f1115;
+  --color-surface: #15181e;
+  --color-surface-raised: #171a21;
+  --color-panel: #13161c;
+  --color-panel-head: #181b22;
+  --color-row-hover: #181c23;
+  --color-chip: #20242d;
+  --color-track: #232833;
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* 罫線 */
+  --color-line: #252a33;
+  --color-line-strong: #2a2f3a;
+  --color-line-soft: #1e222a;
+
+  /* 文字 */
+  --color-ink: #eceae4;
+  --color-ink-soft: #c9ccd2;
+  --color-muted: #a3a7b0;
+  --color-faint: #8a8f99;
+  --color-rank: #7d828c;
+
+  /* アクセント・状態 */
+  --color-accent: #f0643c;
+  --color-accent-ink: #1a0e08;
+  /* グラフのバー用。accentより一段暗くし、暗背景での明度帯（OKLCH L 0.48–0.67）に収めている */
+  --color-chart: #e85a32;
+  --color-notice: #e9c77b;
+  --color-notice-bg: #1d1910;
+  --color-notice-line: #5c4a1e;
 }

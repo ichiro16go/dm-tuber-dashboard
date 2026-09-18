@@ -62,6 +62,7 @@ async function processCandidate(
     videos.push({
       id: videoId,
       channelId: candidate.id,
+      title: v.snippet.title ?? "",
       publishedAt: v.snippet.publishedAt,
       viewCount: Number(v.statistics?.viewCount ?? 0),
       duration,
@@ -99,6 +100,7 @@ async function processCandidate(
       videos.map((v) => ({
         id: v.id,
         channel_id: v.channelId,
+        title: v.title,
         published_at: v.publishedAt,
         view_count: v.viewCount,
         duration: v.duration,

@@ -1,4 +1,4 @@
-import type { ChannelWithMetrics } from "./types";
+import type { ChannelWithMetrics, Video } from "./types";
 
 // Supabase 未設定時にダッシュボードの見た目を確認できるようにするための架空のサンプルデータ。
 // 実在のチャンネル・人物とは一切関係ない。
@@ -59,4 +59,83 @@ export function getSampleChannels(): ChannelWithMetrics[] {
       updatedAt,
     },
   }));
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// チャンネルIDから決まる疑似乱数（同じチャンネルなら毎回同じ動画一覧になる）
+function seededRandom(seedText: string): () => number {
+  let state = 0;
+  for (const ch of seedText) state = (state * 31 + ch.charCodeAt(0)) >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * 詳細画面用の架空の直近30日の動画一覧（投稿日時の降順）。
+ * 通常動画の本数・平均再生数は、そのチャンネルの metrics と一致するように作る。
+ */
+export function getSampleVideos(channelId: string, now: number = Date.now()): Video[] {
+  const seed = SEEDS.find((s) => s.id === channelId);
+  if (!seed) return [];
+  const random = seededRandom(channelId);
+
+  const normalCount = seed.last30DaysVideoCount;
+  const weights = Array.from({ length: normalCount }, () => 0.4 + random() * 1.4);
+  const weightSum = weights.reduce((a, b) => a + b, 0);
+  const targetTotal = seed.avgViewsLast30Days * normalCount;
+  const views = weights.map((w) => Math.round((w / weightSum) * targetTotal));
+  views[views.length - 1] += targetTotal - views.reduce((a, b) => a + b, 0);
+
+  const videos: Video[] = [];
+  const publishedAt = (index: number, count: number) =>
+    new Date(now - ((index + random() * 0.8) / count) * 29 * DAY_MS - DAY_MS / 4).toISOString();
+
+  views.forEach((viewCount, i) => {
+    videos.push({
+      id: `${channelId}-v${i + 1}`,
+      channelId,
+      title: `【サンプル】通常動画 #${normalCount - i}`,
+      publishedAt: publishedAt(i, normalCount),
+      viewCount,
+      duration: 480 + Math.round(random() * 1200),
+      isShort: false,
+      isLiveArchive: false,
+    });
+  });
+
+  const shortCount = Math.round(normalCount * 0.6);
+  for (let i = 0; i < shortCount; i++) {
+    videos.push({
+      id: `${channelId}-s${i + 1}`,
+      channelId,
+      title: `【サンプル】ショート #${shortCount - i}`,
+      publishedAt: publishedAt(i, shortCount),
+      viewCount: Math.round(seed.avgViewsLast30Days * (0.3 + random() * 1.5)),
+      duration: 20 + Math.round(random() * 40),
+      isShort: true,
+      isLiveArchive: false,
+    });
+  }
+
+  const liveCount = 1 + Math.floor(random() * 2);
+  for (let i = 0; i < liveCount; i++) {
+    videos.push({
+      id: `${channelId}-l${i + 1}`,
+      channelId,
+      title: `【サンプル】配信アーカイブ #${liveCount - i}`,
+      publishedAt: publishedAt(i, liveCount),
+      viewCount: Math.round(seed.avgViewsLast30Days * (0.2 + random() * 0.4)),
+      duration: 3600 + Math.round(random() * 3600),
+      isShort: false,
+      isLiveArchive: true,
+    });
+  }
+
+  return videos.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
 }
