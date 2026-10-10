@@ -5,6 +5,20 @@ const ACTIVE_WINDOW_DAYS = 30;
 const RECENT_WINDOW_DAYS = 30;
 const RECENT_VIDEO_COUNT = 30;
 
+/**
+ * YouTubeのショート定義（3分以下かつ縦長または正方形）に沿って判定する。
+ * 尺だけで判定すると3分以下の横動画まで除外されてしまうため、アスペクト比も見る。
+ * アスペクト比が取れなかった場合のみ尺だけで近似する。
+ */
+export function isShortVideo(
+  duration: number,
+  frame: { width: number; height: number } | null
+): boolean {
+  if (duration <= 0 || duration > SHORTS_MAX_DURATION_SECONDS) return false;
+  if (!frame) return true;
+  return frame.height >= frame.width;
+}
+
 export function isWithinDays(iso: string, days: number, now: number = Date.now()): boolean {
   return now - new Date(iso).getTime() <= days * 24 * 60 * 60 * 1000;
 }

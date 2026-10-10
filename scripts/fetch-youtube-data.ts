@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fetchChannels, fetchRecentVideoIds, fetchVideos } from "./lib/youtube";
 import { parseIso8601Duration } from "./lib/duration";
-import { computeMetrics, hasRecentActivity, SHORTS_MAX_DURATION_SECONDS } from "./lib/metrics";
+import { computeMetrics, hasRecentActivity, isShortVideo } from "./lib/metrics";
 import { getSupabaseAdminClient } from "../src/lib/supabase";
 import type { Video } from "../src/lib/types";
 
@@ -57,7 +57,11 @@ async function processCandidate(
 
     const duration = parseIso8601Duration(v.contentDetails?.duration ?? "PT0S");
     const isLiveArchive = Boolean(v.liveStreamingDetails);
-    const isShort = !isLiveArchive && duration > 0 && duration <= SHORTS_MAX_DURATION_SECONDS;
+    const width = Number(v.player?.embedWidth);
+    const height = Number(v.player?.embedHeight);
+    const frame = width > 0 && height > 0 ? { width, height } : null;
+    if (!frame) console.warn(`  [warn] no player size for ${videoId}; short detection falls back to duration only`);
+    const isShort = !isLiveArchive && isShortVideo(duration, frame);
 
     videos.push({
       id: videoId,

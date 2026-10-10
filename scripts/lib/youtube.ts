@@ -17,6 +17,8 @@ export interface YoutubeVideoResource {
   contentDetails?: { duration?: string };
   statistics?: { viewCount?: string };
   liveStreamingDetails?: Record<string, unknown>;
+  /** maxHeight 指定時のみ返る埋め込みプレーヤーサイズ。動画のアスペクト比がわかる。 */
+  player?: { embedWidth?: string | number; embedHeight?: string | number };
 }
 
 interface YoutubeListResponse<T> {
@@ -139,7 +141,12 @@ export async function fetchVideos(
   for (const idsChunk of chunk(videoIds, 50)) {
     const data = await youtubeGet<YoutubeVideoResource>(
       "videos",
-      { part: "snippet,contentDetails,statistics,liveStreamingDetails", id: idsChunk.join(",") },
+      {
+        part: "snippet,contentDetails,statistics,liveStreamingDetails,player",
+        // embedWidth/embedHeight はサイズ上限を指定したときだけ返る（アスペクト比の取得用）
+        maxHeight: "1000",
+        id: idsChunk.join(","),
+      },
       apiKey
     );
     for (const item of data.items ?? []) {

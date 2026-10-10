@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { computeMetrics, hasRecentActivity, isWithinDays } from "./lib/metrics";
+import { computeMetrics, hasRecentActivity, isShortVideo, isWithinDays } from "./lib/metrics";
 import { parseIso8601Duration } from "./lib/duration";
 import type { Video } from "../src/lib/types";
 
@@ -9,6 +9,15 @@ assert.strictEqual(parseIso8601Duration("PT45S"), 45);
 assert.strictEqual(parseIso8601Duration("PT4M13S"), 253);
 assert.strictEqual(parseIso8601Duration("PT1H2M3S"), 3723);
 assert.strictEqual(parseIso8601Duration("PT0S"), 0);
+
+const vertical = { width: 563, height: 1000 };
+const horizontal = { width: 1778, height: 1000 };
+assert.strictEqual(isShortVideo(45, vertical), true);
+assert.strictEqual(isShortVideo(180, { width: 1000, height: 1000 }), true); // 正方形もショート
+assert.strictEqual(isShortVideo(120, horizontal), false); // 3分以下の横動画は通常動画
+assert.strictEqual(isShortVideo(181, vertical), false); // 3分超はショートにならない
+assert.strictEqual(isShortVideo(0, vertical), false);
+assert.strictEqual(isShortVideo(60, null), true); // サイズ不明時は尺のみで近似
 
 assert.strictEqual(isWithinDays(new Date(now - 10 * 86400000).toISOString(), 30, now), true);
 assert.strictEqual(isWithinDays(new Date(now - 40 * 86400000).toISOString(), 30, now), false);
